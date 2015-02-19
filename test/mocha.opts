@@ -1,0 +1,5 @@
+--require test/support
+--reporter dot
+--ui bdd
+--timeout 2000
+--bail

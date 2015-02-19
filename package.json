@@ -1,0 +1,26 @@
+{
+  "name": "bed",
+  "version": "1.0.0",
+  "description": "A REST Client API Generator",
+  "main": "index.js",
+  "scripts": {
+    "test": "mocha"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/department-se/bed.git"
+  },
+  "keywords": [
+    "rest",
+    "client",
+    "bed",
+    "api",
+    "generator"
+  ],
+  "author": "Robert Sköld <robert@department.se>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/department-se/bed/issues"
+  },
+  "homepage": "https://github.com/department-se/bed"
+}
