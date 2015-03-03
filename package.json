@@ -22,5 +22,9 @@
   "bugs": {
     "url": "https://github.com/department-se/bed/issues"
   },
-  "homepage": "https://github.com/department-se/bed"
+  "homepage": "https://github.com/department-se/bed",
+  "dependencies": {
+    "methods": "^1.1.1",
+    "superagent": "^0.21.0"
+  }
 }
