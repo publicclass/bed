@@ -1,5 +1,5 @@
 {
-  "name": "bed",
+  "name": "bed-rest",
   "version": "1.0.0",
   "description": "A REST Client API Generator",
   "main": "index.js",
