@@ -1,8 +1,8 @@
 'use strict';
 
-var Bed = require('../lib/bed');
+var Bed = require('..');
 
-describe.skip('bed', function() {
+describe('bed', function() {
   describe('a basic github api', function() {
     var bed = new Bed();
     bed.auth('basic', 'foo', 'bar');
@@ -30,6 +30,7 @@ describe.skip('bed', function() {
 
     var bin = {
       auth: bed.get('/basic-auth/<user>/bar').make(),
+      multiAuth: bed.get('/basic-auth/<user>/<pass>').make(),
       failAuth: bed.get('/basic-auth/foo/baz').make(),
       get: bed.get('/get').make(),
       post: bed.post('/post').make()
@@ -45,6 +46,10 @@ describe.skip('bed', function() {
 
     it('should successfully authorize', function() {
       return bin.auth('foo').should.eventually.have.deep.property('body.authenticated', true);
+    });
+
+    it('should successfully authorize with multiple required args', function() {
+      return bin.multiAuth('foo', 'bar').should.eventually.have.deep.property('body.authenticated', true);
     });
 
     it('should get back query args', function() {

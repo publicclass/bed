@@ -1,5 +1,6 @@
 'use strict';
 
+var debug = require('debug')('bed');
 var methods = require('methods');
 var request = require('superagent');
 
@@ -54,22 +55,43 @@ Builder.prototype.make = function() {
   var builder = this;
   return function(/* params..., body, query */) {
     // TODO parse/validate the arguments
+    var args = [].slice.call(arguments);
     var path = builder.path.path;
     var params = [];
     var body = null;
     var query = {};
 
+    // query is the last option
+    var last = args[args.length-1];
+    if (typeof last === 'object') {
+      query = args.pop();
+    }
+
     // params must be the first arguments
     if (builder.path.has.params) {
-      params = [].slice.call(arguments, 0, builder.path.has.params);
+      params = args.splice(0, builder.path.has.params);
       path = builder.path.populate(params);
     }
+
+    // body is the rest...
+    if (args.length) {
+      body = args.length === 1 ? args.pop() : args;
+    }
+
+    // reject if it doesn't have all the required arguments 
+    var missing = params.slice(0, builder.path.has.required);
+    if (missing.length < builder.path.has.required) {
+      var err = new Error('missing required params ' + missing.join(', '));
+      return Promise.reject(err);
+    }
+
+    debug('%s(%j, %j)', builder.method, path, params);
 
     return new Promise(function(resolve, reject) {
       var req = request[builder.method](builder.bed.baseUrl + path);
       req.query(merge(builder.bed.qs, builder.qs, query));
       req.set(merge(builder.bed.headers, builder.headers));
-      // TODO apply the other stuff (send data etc)
+      req.send(body);
       req.end(function(err, res) {
         if (err) {
           reject(err);
@@ -102,29 +124,33 @@ Path.prototype.parse = function() {
   var has = this.has;
   var index = 0;
   var fields = [];
-  var regexp = '^' + this.path.replace(/\//g, '\\/') + '$';
-  regexp = regexp.replace(/<([^>]+)>/g, function(match, name){
-    fields.push({name: name, required: true, index: index++});
-    has.required += 1;
+  var position = 0;
+  var regexp = this.path.replace(/<([^>]+)>|\[([^\]]+)\]/g, function(match, r, o, i, path){
+    fields.push({part: path.slice(position, i)});
+    fields.push({name: r || o});
+    has.required += r ? 1 : 0;
+    has.optional += o ? 1 : 0;
     has.params += 1;
-    return '(\\w+?)';
+    position = i + match.length;
+    return r ? '(<[^>]+>)' : '(\\[[^\\]]+\\])';
   });
-  regexp = regexp.replace(/\[([^\]]+)\]/g, function(match, name){
-    fields.push({name: name, required: false, index: index++});
-    has.optional += 1;
-    has.params += 1;
-    return '(\\w*?)';
-  });
-  this.regexp = new RegExp(regexp);
+  fields.push({part: this.path.slice(position)});
+  this.regexp = new RegExp('^' + regexp.replace(/\//g, '\\/') + '$');
   this.fields = fields;
 };
 Path.prototype.valid = function(path) {
   return this.regexp.test(path);
 };
 Path.prototype.populate = function(params) {
-  return this.path.replace(this.regexp, function(match){
-    return params[i++];
-  });
+  debug('populate(%j)', params);
+  var i = 0;
+  return this.fields.map(function(field) {
+    if (field.part) {
+      return field.part;
+    } else  {
+      return params[i++];
+    }
+  }).join('');
 };
 
 function merge() {

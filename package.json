@@ -24,7 +24,13 @@
   },
   "homepage": "https://github.com/department-se/bed",
   "dependencies": {
+    "debug": "^2.1.2",
     "methods": "^1.1.1",
     "superagent": "^0.21.0"
+  },
+  "devDependencies": {
+    "chai": "^2.1.1",
+    "chai-as-promised": "^4.3.0",
+    "mocha": "^2.1.0"
   }
 }
