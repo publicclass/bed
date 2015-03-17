@@ -42,27 +42,35 @@ function Builder(bed, method, path) {
   this.qs = {};
   this.accept = null;
   this.headers = {};
-  this.body = false;
   this.formatter = function(res) { return res; };
 }
+Builder.prototype.type = function(type) {
+  return this.set('Content-Type', type);
+};
+Builder.prototype.accept = function(accept) {
+  return this.set('Accept', accept);
+};
 Builder.prototype.set = addTo('headers');
 Builder.prototype.query = addTo('qs');
 Builder.prototype.format = function(fn) {
   this.formatter = fn;
   return this;
 };
+Builder.prototype.body = function(body) {
+  this.withBody = body;
+  return this;
+};
 Builder.prototype.make = function() {
   var builder = this;
   return function(/* params..., body, query */) {
-    // TODO parse/validate the arguments
     var args = [].slice.call(arguments);
     var path = builder.path.path;
     var params = [];
-    var body = null;
+    var body = builder.withBody;
     var query = {};
 
     // query is the last option
-    var last = args[args.length-1];
+    var last = args[args.length - 1];
     if (typeof last === 'object') {
       query = args.pop();
     }
@@ -73,16 +81,16 @@ Builder.prototype.make = function() {
       path = builder.path.populate(params);
     }
 
-    // body is the rest...
-    if (args.length) {
+    // body is the rest, unless already set...
+    if (!body && args.length) {
       body = args.length === 1 ? args.pop() : args;
     }
 
-    // reject if it doesn't have all the required arguments 
+    // reject if it doesn't have all the required arguments
     var missing = params.slice(0, builder.path.has.required);
     if (missing.length < builder.path.has.required) {
-      var err = new Error('missing required params ' + missing.join(', '));
-      return Promise.reject(err);
+      var e = new Error('missing required params ' + missing.join(', '));
+      return Promise.reject(e);
     }
 
     debug('%s(%j, %j)', builder.method, path, params);
@@ -122,7 +130,6 @@ function Path(path) {
 Path.prototype.parse = function() {
   // required
   var has = this.has;
-  var index = 0;
   var fields = [];
   var position = 0;
   var regexp = this.path.replace(/<([^>]+)>|\[([^\]]+)\]/g, function(match, r, o, i, path){
@@ -147,7 +154,7 @@ Path.prototype.populate = function(params) {
   return this.fields.map(function(field) {
     if (field.part) {
       return field.part;
-    } else  {
+    } else {
       return params[i++];
     }
   }).join('');
