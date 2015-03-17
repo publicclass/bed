@@ -18,7 +18,7 @@ describe('bed', function() {
     };
 
     it('should fail to authorize', function() {
-      return gh.test().should.eventually.have.property('status', 401);
+      return gh.test().should.eventually.be.rejectedWith(/Unauthorized/);
     });
 
   });
@@ -37,7 +37,7 @@ describe('bed', function() {
     };
 
     it('should fail to authorize', function() {
-      return bin.failAuth().should.eventually.have.property('status', 401);
+      return bin.failAuth().should.eventually.be.rejectedWith(/Unauthorized/);
     });
 
     it('should fail without required user arg', function() {
